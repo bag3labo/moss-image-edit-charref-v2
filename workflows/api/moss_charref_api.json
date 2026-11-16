@@ -1,0 +1,219 @@
+{
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "moss_image_sft_bf16.safetensors",
+   "weight_dtype": "default"
+  },
+  "_meta": {
+   "title": "UNETLoader"
+  }
+ },
+ "2": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen3.5_9b_bf16.safetensors",
+   "type": "moss_image",
+   "device": "default"
+  },
+  "_meta": {
+   "title": "CLIPLoader"
+  }
+ },
+ "3": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "flux2-vae.safetensors"
+  },
+  "_meta": {
+   "title": "VAELoader"
+  }
+ },
+ "4": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "model": [
+    "1",
+    0
+   ],
+   "lora_name": "moss_image_edit_charref_v2.safetensors",
+   "strength_model": 1.0
+  },
+  "_meta": {
+   "title": "Character reference LoRA"
+  }
+ },
+ "13": {
+  "class_type": "EmptyFlux2LatentImage",
+  "inputs": {
+   "width": 672,
+   "height": 896,
+   "batch_size": 1
+  },
+  "_meta": {
+   "title": "Image size"
+  }
+ },
+ "36": {
+  "class_type": "MossCharRefLayout",
+  "inputs": {
+   "model": [
+    "4",
+    0
+   ],
+   "latent": [
+    "13",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "Reference layout (as trained)"
+  }
+ },
+ "20": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "example_reference.png"
+  },
+  "_meta": {
+   "title": "Your character (white background)"
+  }
+ },
+ "21": {
+  "class_type": "ResizeAndPadImage",
+  "inputs": {
+   "image": [
+    "20",
+    0
+   ],
+   "target_width": 448,
+   "target_height": 448,
+   "padding_color": "white",
+   "interpolation": "lanczos"
+  },
+  "_meta": {
+   "title": "Reference to 448 px"
+  }
+ },
+ "9": {
+  "class_type": "TextEncodeMOSSImageEdit",
+  "inputs": {
+   "clip": [
+    "2",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ],
+   "images.image_0": [
+    "21",
+    0
+   ],
+   "prompt": "1girl, solo, sitting, cafe, table, holding cup, coffee, window, sunlight, smile, looking at viewer, upper body",
+   "edit_format": "ai-toolkit",
+   "image_strength": 1.0
+  },
+  "_meta": {
+   "title": "Scene and pose (tags)"
+  }
+ },
+ "10": {
+  "class_type": "TextEncodeMOSSImageEdit",
+  "inputs": {
+   "clip": [
+    "2",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ],
+   "images.image_0": [
+    "21",
+    0
+   ],
+   "prompt": "",
+   "edit_format": "ai-toolkit",
+   "image_strength": 1.0
+  },
+  "_meta": {
+   "title": "Negative: empty prompt, same picture"
+  }
+ },
+ "15": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "14",
+    0
+   ],
+   "vae": [
+    "3",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "VAEDecode"
+  }
+ },
+ "16": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "15",
+    0
+   ],
+   "filename_prefix": "charref"
+  },
+  "_meta": {
+   "title": "SaveImage"
+  }
+ },
+ "5": {
+  "class_type": "SkipLayerGuidanceDiTSimple",
+  "inputs": {
+   "model": [
+    "36",
+    0
+   ],
+   "double_layers": "",
+   "single_layers": "22",
+   "start_percent": 0.0,
+   "end_percent": 1.0
+  },
+  "_meta": {
+   "title": "Skip-layer guidance (block 22)"
+  }
+ },
+ "14": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "5",
+    0
+   ],
+   "positive": [
+    "9",
+    0
+   ],
+   "negative": [
+    "10",
+    0
+   ],
+   "latent_image": [
+    "13",
+    0
+   ],
+   "seed": 1,
+   "steps": 50,
+   "cfg": 3.0,
+   "sampler_name": "euler",
+   "scheduler": "sgm_uniform",
+   "denoise": 1.0
+  },
+  "_meta": {
+   "title": "KSampler"
+  }
+ }
+}
